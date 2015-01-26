@@ -1,0 +1,95 @@
+---
+title: "Storm Data Analysis"
+author: "Max Wensel"
+date: "Saturday, January 24, 2015"
+output: html_document
+---
+Synopsis:
+This is an R markdown document meant to edify and explain the thought process and code that went into creating a functional data analysis of storm data, as per the data provided by the coursera course reproducible research. This document shows the process that went into cleaning the data before presentation as well as the final results. The analysis proceeded by loading the csv data, then summing fatalities grouped by event type with the plyr package. Event types were then consolidated, and the output shown as a bar graph.
+
+
+The first step in this code is to load the data, which I have renamed in my working directory as stormdat.csv.The resulting object is saved as "data". Subsequently, the header and structure of the data are also shown.
+
+
+Data Processing:
+```{r}
+data<-read.csv("stormdat.csv")
+head(data)
+str(data)
+options(rpubs.upload.method = "internal")
+```
+
+
+The next task is to analyze which events are most harmful to population health.
+An initial step will be reducing the data to those which caused 1 or more fatalities.
+```{r}
+data2<-data[ which(data$FATALITIES>=1), ]
+head(data2)
+str(data2)
+```
+The new output shows only 6974 observations, down from an initial 902297. This should make the data easier to work with. The next step will be to sum fatalities by event type. This will be accomplished through the use of the plyr package. Exploratory analysis will be done on the resultant data frame.
+
+```{r}
+library(plyr)
+data3<-ddply(data2, "EVTYPE", function(df)sum(df$FATALITIES, na.rm=T))
+head(data3)
+str(data3)
+data3
+```
+The data shows many redundant categories, so aggregating some categories would be beneficial. The process of aggregating every category with at least 1 fatality would be quite time consuming; however, so only categories with double-digit fatalities will be used before aggregation. This should not effect the results very much as major contributors to fatalities are at least in double  digits.
+
+```{r}
+data3<-data3[ which(data3$V1>=10), ]
+data3
+```
+Aggregation of the remaining categories is now done. Row names are periodically reset to avoid confusion. 
+
+```{r}
+data3[3,2]<-data3[3,2]+data3[4,2]+data3[5,2]
+data3<-data3[-c(4,5), ]
+rownames(data3)<-seq(length=nrow(data3))
+data3[6,2]<-data3[6,2]+data3[9,2]+data3[18,2]+data3[19,2]+data3[33,2]+data3[46,2]+data3[47,2]
+data3<-data3[-c(9,18,19,33,46,47), ]
+rownames(data3)<-seq(length=nrow(data3))
+data3[3,2]<-data3[3,2]+data3[7,2]+data3[8,2]+data3[9,2]
+data3<-data3[-c(7,8,9),]
+rownames(data3)<-seq(length=nrow(data3))
+data3[2,2]<-data3[2,2]+data3[15,2]+data3[13,2]+data3[22,2]+data3[43,2]+data3[44,2]+data3[45,2]+data3[46,2]
+data3<-data3[-c(15,13,22,43,44,45,46),]
+rownames(data3)<-seq(length=nrow(data3))
+data3[11,2]<-data3[11,2]+data3[7,2]+data3[8,2]+data3[9,2]+data3[10,2]+data3[14,2]+data3[15,2]+data3[26,2]+data3[27,2]
+data3<-data3[-c(7,8,9,10,14,15,26,27),]
+rownames(data3)<-seq(length=nrow(data3))
+data3[4,2]<-data3[4,2]+data3[8,2]
+data3<-data3[-8, ]
+rownames(data3)<-seq(length=nrow(data3))
+data3[19,2]<-data3[19,2]+data3[9,2]+data3[10,2]+data3[15,2]+data3[16,2]+data3[20,2]+data3[21,2]+data3[23,2]+data3[25,2]+data3[30,2]
+data3<-data3[-c(9,10,15,16,20,21,23,25,30), ]
+rownames(data3)<-seq(length=nrow(data3))
+data3[9,2]<-data3[9,2]+data3[10,2]+data3[17,2]
+data3<-data3[-c(10,17),]
+rownames(data3)<-seq(length=nrow(data3))
+data3[19,2]<-data3[18,2]+data3[19,2]
+data3<-data3[-18,]
+rownames(data3)<-seq(length=nrow(data3))
+data3[12,2]<-data3[12,2]+data3[13,2]
+data3<-data3[-13,]
+rownames(data3)<-seq(length=nrow(data3))
+data3[7,2]<-data3[7,2]+data3[16,2]
+data3<-data3[-16, ]
+rownames(data3)<-seq(length=nrow(data3))
+data3
+```
+
+
+Results:
+The data has now been reduced to 16 variables, which can best be seen in a bar graph.
+
+```{r}
+barplot(data3$V1, names.arg=data3$EVTYPE, main="Weather events in the US as measured by fatalities", las=2, col="blue")
+options(rpubs.upload.method = "internal")
+options(RCurlOptions = list(verbose = FALSE, capath = system.file("CurlSSL", "cacert.pem", package = "RCurl"), ssl.verifypeer = FALSE))
+```
+
+
+The graph shows that tornadoes and excessive heat are the two largest causes of fatility in the United States, with floods coming in third. 
